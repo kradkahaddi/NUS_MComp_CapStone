@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "cookie monster",
+    "version": "0.1",
+    "description": "This extension handles cookie permissions and privacy banners.",
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts":[
+        {
+            "matches": ["<all_urls>"],
+            "js": ["main-content.js"],
+            "runsAt": "document_idle"
+        }
+    ]
+}
