@@ -167,7 +167,7 @@ async function get_cookie_child(currentNode, source, observer=null) {
             setTimeout(()=>{return false}, 100);
             
             // var counter = 5;
-            var policy = await getStorageData('policy1');
+            var policy = await getStorageData('policy');
             if (policy.policy === undefined){
                 policy = {policy:{policy:'necessary'}}
             }
@@ -201,7 +201,16 @@ async function get_cookie_child(currentNode, source, observer=null) {
                         button_labels = []
                         input_labels = []
                         inputs = currentNode.getElementsByTagName('input');
-                        
+                        for (const inp of inputs){
+                            var input_string = "";
+                            if (inp.labels.length>0){
+                                for (const label of inp.labels){
+                                    input_string += label + ' ';
+                                }
+                                input_labels.push(input_string)
+                            }
+                        }
+
                         for (const button of buttons){
                             var label_string = ""
                             if (button.labels.length>0){
@@ -227,51 +236,58 @@ async function get_cookie_child(currentNode, source, observer=null) {
                             return null
                         }
                         console.log('sending buttons')
-                        button_check_result = await api_check_buttons_first(
-                            "TestingFirstButtons", APIURL+'firstbuttons',
-                            JSON.stringify(button_text).toLowerCase(),
-                            JSON.stringify(policy.policy).toLowerCase(), 
-                            JSON.stringify(badButtons).toLowerCase()
-                        )
-                        if(PROCESSED_POP===true){
-                            return null
-                        }
-                        console.log('receiving response for buttons')
-                        loopFlag = false
-                        if (typeof(button_check_result)==='string'){
-                            button_check_result = JSON.parse(button_check_result);
-                        }
-                        console.log(button_check_result)
-                        
-                        if(PROCESSED_POP===true){
-                            return null
-                        }
-
-                        if ((button_check_result.check) && (!PROCESSED_POP)){
-                            // do some processing
-                            // click some button - Accept first, reject second, nuance third
-                            buttons[button_check_result.best_index].click()
-                            if (button_check_result.solved){
-                                console.log('resolved the pop up')
-                                PROCESSED_POP = true
-                                loopFlag = false
-                                return null
-                            }
-                            else {
-                                // go into detailed options
-                                loopFlag=false
-                                return null
-                            }
-                        }
-                        else{
+                        // if button_text only has elements
+                        if ((button_text.length>0) && ((input_labels.length===0)&&(button_labels.length===0))){
+                            button_check_result = await api_check_buttons_first(
+                                "TestingFirstButtons", APIURL+'firstbuttons',
+                                JSON.stringify(button_text).toLowerCase(),
+                                JSON.stringify(policy.policy).toLowerCase(), 
+                                JSON.stringify(badButtons).toLowerCase()
+                            )
                             if(PROCESSED_POP===true){
                                 return null
                             }
-                            console.log('moving to parent - had buttons')
-                            badButtons.push(...buttons_labels)
-                            currentNode = currentNode.parentNode;
-                            loopFlag = true;
-                            // counter = counter -1;
+                            console.log('receiving response for buttons')
+                            loopFlag = false
+                            
+                            if (typeof(button_check_result)==='string'){
+                                button_check_result = JSON.parse(button_check_result);
+                            }
+                            console.log(button_check_result)
+                            
+                            if(PROCESSED_POP===true){
+                                return null
+                            }
+
+                            if ((button_check_result.check) && (!PROCESSED_POP)){
+                                // do some processing
+                                // click some button - Accept first, reject second, nuance third
+                                buttons[button_check_result.best_index].click()
+                                if (button_check_result.solved){
+                                    console.log('resolved the pop up')
+                                    PROCESSED_POP = true
+                                    loopFlag = false
+                                    return null
+                                }
+                                else {
+                                    // go into detailed options
+                                    loopFlag=false
+                                    return null
+                                }
+                            }
+                            else{
+                                if(PROCESSED_POP===true){
+                                    return null
+                                }
+                                console.log('moving to parent - had buttons')
+                                badButtons.push(...buttons_labels)
+                                currentNode = currentNode.parentNode;
+                                loopFlag = true;
+                                // counter = counter -1;
+                            }
+                        }
+                        else if ((input_labels.length>0)||(button_labels.length>0)){
+                            continue
                         }
                     }
                     else {
