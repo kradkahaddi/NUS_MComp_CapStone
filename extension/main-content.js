@@ -6,6 +6,14 @@ var PROCESSED_POP = false
 // Need two functions:
 // One to message and find the cookie banner
 // Two to find the best button
+const getStorageData = key =>
+  new Promise((resolve, reject) =>
+    chrome.storage.sync.get(key, result =>
+      chrome.runtime.lastError
+        ? reject(Error(chrome.runtime.lastError.message))
+        : resolve(result)
+    )
+  )
 
 function api_check_cookie_fragment(query, url, fragment, source) {
     return new Promise((resolve, reject)=>{
@@ -33,7 +41,7 @@ function api_check_cookie_fragment(query, url, fragment, source) {
     })
 }
 
-function api_check_buttons_first(query, url, button_labels, options) {
+function api_check_buttons_first(query, url, button_labels, options,  badButtons) {
     return new Promise((resolve, reject)=>{
         chrome.runtime.sendMessage(
             {
@@ -41,7 +49,8 @@ function api_check_buttons_first(query, url, button_labels, options) {
                 url: url,
                 button_labels: button_labels,
                 options: options,
-                lang: document.documentElement.lang
+                lang: document.documentElement.lang,
+                bad_buttons: badButtons
             }, (response) => {
                 // console.log("testing first button api response", response)
                 console.log('testing the first button api response')
@@ -143,6 +152,7 @@ async function get_cookie_child(currentNode, source, observer=null) {
 
         if ((currText != undefined) && (currText != null) && (currText.length > 20)){
             var checkFlag = false
+            var badButtons = []
             // console.log(currText)
             // console.log('pinging api to check for cookies');
             
@@ -157,10 +167,17 @@ async function get_cookie_child(currentNode, source, observer=null) {
             setTimeout(()=>{return false}, 100);
             
             // var counter = 5;
+            var policy = await getStorageData('policy1');
+            if (policy.policy === undefined){
+                policy = {policy:{policy:'necessary'}}
+            }
+
+            console.log(policy)
 
             if ((result.check === true) && (PROCESSED_POP===false)){
                 var loopFlag = true
                 while ((loopFlag===true)) {
+
                     if(PROCESSED_POP===true){
                         return null
                     }
@@ -180,26 +197,31 @@ async function get_cookie_child(currentNode, source, observer=null) {
 
                         console.log('has buttons')
                         // check the button
-                        buttons_labels = []
+                        button_text = []
+                        button_labels = []
+                        input_labels = []
+                        inputs = currentNode.getElementsByTagName('input');
+                        
                         for (const button of buttons){
                             var label_string = ""
                             if (button.labels.length>0){
-                                console.log('has labels')
+                                // console.log('has labels')
                                 for (const label of button.labels){
                                     label_string += label + ' ';
-                            }
+                                }
+                                button_labels = []
                             }
                             else {
-                                console.log('no labels')
+                                // console.log('no labels')
                                 label_string = button.innerText
+                                button_text.push(label_string)
                             }
                             
                             if(PROCESSED_POP===true){
                                 return null
                             }
 
-                            console.log("button label is ", label_string)
-                            buttons_labels.push(label_string)
+                            // console.log("button label is ", label_string)
                         }
                         if(PROCESSED_POP===true){
                             return null
@@ -207,8 +229,9 @@ async function get_cookie_child(currentNode, source, observer=null) {
                         console.log('sending buttons')
                         button_check_result = await api_check_buttons_first(
                             "TestingFirstButtons", APIURL+'firstbuttons',
-                            JSON.stringify(buttons_labels).toLowerCase(),
-                            "some string representing nuanced options"
+                            JSON.stringify(button_text).toLowerCase(),
+                            JSON.stringify(policy.policy).toLowerCase(), 
+                            JSON.stringify(badButtons).toLowerCase()
                         )
                         if(PROCESSED_POP===true){
                             return null
@@ -223,6 +246,7 @@ async function get_cookie_child(currentNode, source, observer=null) {
                         if(PROCESSED_POP===true){
                             return null
                         }
+
                         if ((button_check_result.check) && (!PROCESSED_POP)){
                             // do some processing
                             // click some button - Accept first, reject second, nuance third
@@ -236,7 +260,7 @@ async function get_cookie_child(currentNode, source, observer=null) {
                             else {
                                 // go into detailed options
                                 loopFlag=false
-
+                                return null
                             }
                         }
                         else{
@@ -244,6 +268,7 @@ async function get_cookie_child(currentNode, source, observer=null) {
                                 return null
                             }
                             console.log('moving to parent - had buttons')
+                            badButtons.push(...buttons_labels)
                             currentNode = currentNode.parentNode;
                             loopFlag = true;
                             // counter = counter -1;

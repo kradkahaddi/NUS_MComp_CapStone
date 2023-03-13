@@ -23,8 +23,8 @@ def process_raw(keyword):
     with open(data_path/(keyword+'_words_proc.txt'), 'w') as f:
         input_list = f.write('\n'.join(sorted(result)))
 
-process_raw(keyword='agree')
-process_raw(keyword='reject')
+process_raw(keyword='manage')
+process_raw(keyword='necessary')
 
 
 

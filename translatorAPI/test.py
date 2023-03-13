@@ -5,6 +5,7 @@ from typing import Optional, Union
 from pydantic import BaseModel
 from itertools import chain
 
+import json
 import ast
 
 translator = Translator()
@@ -21,8 +22,15 @@ def read_file(filename):
       print(res)
    return res
 
-agree_set = read_file('data/agree_words_final.txt')
-reject_set= read_file('data/reject_words_final.txt')
+agree_set = read_file('data/agree_words2_final.txt')
+reject_set= read_file('data/reject_words2_final.txt')
+manage_set = read_file('data/manage_words_final.txt')
+necessary_set= read_file('data/necessary_words_final.txt')
+
+"""
+need save
+need 3 types options
+"""
 
 print(f'agree words first five {list(agree_set)[:5]}')
 print(f'reject words first five {list(reject_set)[:5]}')
@@ -100,6 +108,7 @@ def test_whole_body(body:InboundHTML):
 class InboundButtonDetails(BaseModel):
    buttons:str
    options:str
+   bad_buttons:str
    lang:str
 
 @app.post("/firstbuttons")
@@ -115,25 +124,64 @@ def test_first_buttons(request:InboundButtonDetails):
    """
    print(request)
 
-   buttons = (ast.literal_eval(request.buttons))
-   buttons = [translate_query(button).text for button in buttons]
+   buttons = (json.loads(request.buttons))
+   buttons = [translate_query(button).text.lower() for button in buttons]
+   options = json.loads(request.options)
+   bad_buttons = json.loads(request.bad_buttons)
+   print(f"{options=}")
    # buttons = list(chain)
    print(f'{buttons=}')
-   button_set = set(chain.from_iterable([button.split() for button in buttons]))
+   bad_buttons = [translate_query(button).text.lower() for button in bad_buttons]
+   print(f'{bad_buttons=}')
+   button_set = set(chain.from_iterable([button.split() for button in buttons 
+                                         if button not in bad_buttons]))
    # button_set = set(buttons)
    print(f"{button_set=}")
-   intersection = agree_set.intersection(button_set)
-   print(intersection)
-   if intersection:
-      print('found a button',  intersection)
+   
+   agree_intersection = agree_set.intersection(button_set)
+   reject_intersection = reject_set.intersection(button_set)
+   necessary_intersection = necessary_set.intersection(button_set)
+   manage_intersection = manage_set.intersection(button_set)
+   policy = options['policy']
+   print(f'policy is: {policy}')
+   print(f"{agree_intersection=}")
+   print(f"{reject_intersection=}")
+   print(f"{necessary_intersection=}")
+   print(f'{manage_intersection=}')
+
+   if agree_intersection:
+      print('found the agree button',  agree_intersection)
       check = True
       solved = True
       best_index = 0
-      if len(intersection)>1:
-         print("found more than one button")
-      key = list(intersection)[0]
+
+      # if len(agree_intersection)>1:
+      #    print("found more than one button")
+      
+      
+      if policy == 'agree':
+         key = list(agree_intersection)[0]
+         # print(key)
+      elif (policy == 'reject') and (len(reject_intersection)>0):
+         key = list(reject_intersection)[0]
+         # print(key)
+      elif (policy == 'reject') and (len(necessary_intersection)>0):
+         key = list(necessary_intersection)[0]
+         # print(key)
+      elif (policy == 'necessary') and (len(necessary_intersection)>0):
+         key = list(necessary_intersection)[0]
+         # print(key)
+      elif (policy == 'necessary') and (len(reject_intersection)>0):
+         key = list(reject_intersection)[0]
+         # print(key)
+      else:
+         key = list(agree_intersection)[0]
+      print(key)
+
       for i, button in enumerate(buttons):
-         if ('all' in button.lower()) or (key in button.lower()):
+         if button in bad_buttons:
+            continue
+         if (key in button.lower()):
             best_index = i
             break
    else:

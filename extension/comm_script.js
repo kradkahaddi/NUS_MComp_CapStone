@@ -67,7 +67,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({buttons: request.button_labels, options:request.options, lang: request.lang}),
+                body: JSON.stringify({buttons: request.button_labels, 
+                    options:request.options, 
+                    lang: request.lang, bad_buttons:request.bad_buttons}),
             })
             .then(response => response.text())
             .then(response => sendResponse(response))
