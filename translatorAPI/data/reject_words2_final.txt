@@ -8,8 +8,6 @@ annihilate
 aside
 avoid
 away
-back
-backtrack
 balk
 ban
 blacklist

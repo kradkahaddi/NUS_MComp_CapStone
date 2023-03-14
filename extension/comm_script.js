@@ -76,5 +76,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             .catch();
         return true;
     }
+
+    else if (request.contentScriptQuery=="TestingDetailedButtons") {
+        var url = request.url;
+        console.log("first button testing url is: ", url);
+        // var body = JSON.stringify(request.body);
+        fetch(url, {
+                method: "POST",
+                // mode: "cors",
+                // cache: "no-cache",
+                // credentials: "same-origin",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({buttons: request.button_labels, 
+                    options:request.options, 
+                    lang: request.lang, bad_buttons:request.bad_buttons}),
+            })
+            .then(response => response.text())
+            .then(response => sendResponse(response))
+            .catch();
+        return true;
+    }
     
 })

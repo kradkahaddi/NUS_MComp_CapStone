@@ -71,6 +71,8 @@ rig
 season
 select
 set
+setting
+settings
 settle
 shape
 square

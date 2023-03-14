@@ -43,7 +43,6 @@ concede
 conclude
 concur
 condone
-confirm
 consent
 corroborate
 countenance

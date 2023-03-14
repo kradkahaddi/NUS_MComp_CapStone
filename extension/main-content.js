@@ -2,7 +2,8 @@ console.log('\n\n\nLoaded the main content script.\n\n\n')
 var APIURL = "http://127.0.0.1:8000/"
 
 // var count_global = 0
-var PROCESSED_POP = false
+var PROCESSED_POP_INIT = false
+var DETAIL_PROCESSED_POP = false
 // Need two functions:
 // One to message and find the cookie banner
 // Two to find the best button
@@ -14,6 +15,16 @@ const getStorageData = key =>
         : resolve(result)
     )
   )
+
+function sleep_func(milliseconds){
+    new Promise((resolve, reject)=>setTimeout(()=>{return False}, milliseconds)
+                                ?reject(Error('something weird'))
+                                :resolve("done sleeping"))
+}
+
+function timeout(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function api_check_cookie_fragment(query, url, fragment, source) {
     return new Promise((resolve, reject)=>{
@@ -76,6 +87,223 @@ function api_check_buttons_first(query, url, button_labels, options,  badButtons
             }
         )
     })
+}
+
+function api_check_buttons_detailed(query, url, button_labels, options,  badButtons) {
+    return new Promise((resolve, reject)=>{
+        chrome.runtime.sendMessage(
+            {
+                contentScriptQuery: query,
+                url: url,
+                button_labels: button_labels,
+                options: options,
+                lang: document.documentElement.lang,
+                bad_buttons: badButtons
+            }, (response) => {
+                // console.log("testing first button api response", response)
+                console.log('testing the first button api response')
+                response = JSON.parse(response)
+                // console.log(response)
+
+                if (response!=undefined && response !=""){
+                    checkFlag=response.check;
+                        if(checkFlag===true){
+                            // console.log('api check - found cookie candidate', source)
+                            console.log('found something interesting')
+                            resolve(response)
+                        }
+                        else{
+                            console.log('no relevant buttons')
+                            resolve(response)
+                        }
+                }
+                else {
+                    console.log("API was non responsive")
+                    reject(response)
+                }
+            }
+        )
+    })
+}
+
+
+async function resolve_cookie_detailed(currentNode, policy, badButtons){
+    console.log('INSIDE DETAIL SELECTOR found input labels')
+                            // console.log(document.activeElement)
+    var buttons = currentNode.getElementsByTagName('button');
+    if(DETAIL_PROCESSED_POP===true){
+        return null
+    }
+
+    button_text = []
+    button_labels = []
+    input_labels = []
+    labelled_buttons = []
+    text_buttons  = []
+    cleaned_inputs = []
+    console.log('declared arrays')
+    
+    if(DETAIL_PROCESSED_POP===true){
+        return null
+    }
+
+    inputs = currentNode.getElementsByTagName('input');
+    for (inp of inputs){
+        style=window.getComputedStyle(inp)
+        if (!((style.visibility === 'hidden')
+            ||(style.visibility === 'none') || (style.display === 'hidden')
+            ||(style.display === 'none'))&&(inp.disabled===false))
+            {
+                // console.log(inp.disabled)
+                cleaned_inputs.push(inp)
+            }
+    }
+    
+    if(DETAIL_PROCESSED_POP===true){
+        return null
+    }
+
+    console.log('processed input tags')
+
+    for (var inp of cleaned_inputs){
+        var input_string = "";
+        if (inp.labels.length>0){
+            for (const label of inp.labels){
+                input_string += label.textContent.toLowerCase() + ' ';
+            }
+            input_labels.push(input_string.trim())
+        }
+        else{
+            while(true){
+                inp = inp.parentNode
+                // for (const child of inp.childNodes){
+                //     // https://stackoverflow.com/questions/10805125/how-to-remove-all-line-breaks-from-a-string
+                    
+                //     // if((child.nodeName=='P')||(child.nodeName=='DIV')||(child.node)){
+                        
+                //     // }
+                // }
+                // console.log(inp.textContent)
+                text = inp.textContent.replace(/\r?\n|\r/g, "").trim().toLowerCase()
+                if (text.length>0){
+                    input_labels.push(text)
+                    break
+                }
+                continue
+            }
+        }
+    }
+
+    if(DETAIL_PROCESSED_POP===true){
+        return null
+    }
+
+    console.log('processed input labels')
+    console.log(input_labels)
+
+    for (const button of buttons){
+        var label_string = ""
+        if (button.disabled){
+            continue
+        }
+        if (button.labels.length>0){
+            // console.log('has labels')
+            for (const label of button.labels){
+                label_string += label + ' ';
+            }
+            button_labels.push(label_string)
+            labelled_buttons.push(button)
+        }
+        else {
+            // console.log('no labels')
+            label_string = button.innerText
+            button_text.push(label_string)
+            text_buttons.push(button)
+        }
+    }
+    
+    if(DETAIL_PROCESSED_POP===true){
+        return null
+    }
+
+    var inputs_for_check = {
+        button_text: JSON.stringify(button_text).toLowerCase(),
+        button_label: JSON.stringify(button_labels).toLowerCase(),
+        input_label: JSON.stringify(input_labels).toLowerCase()
+    }
+    console.log(inputs_for_check)
+    console.log('inputs')
+    for (const inp of cleaned_inputs){
+        console.log(inp)
+    }
+    console.log('text buttons')
+    text_buttons.forEach((x)=>console.log(x))
+    console.log('labelled buttons', labelled_buttons)
+    var button_check_result = await api_check_buttons_detailed(
+        "TestingDetailedButtons", APIURL+'detailedoptions',
+        JSON.stringify(inputs_for_check).toLowerCase(),
+        JSON.stringify(policy.policy).toLowerCase(), 
+        JSON.stringify(badButtons).toLowerCase()
+        )
+    
+    if(DETAIL_PROCESSED_POP===true){
+        return null
+    }
+
+    console.log("returned from detailed button func")
+    
+    if (typeof(button_check_result)==='string'){
+        button_check_result = JSON.parse(button_check_result);
+    }
+    console.log(button_check_result)
+    
+    // DO CHECK FOR SAVE BUTTON
+    if (!button_check_result.has_save_button){
+        console.log('no save button')
+        await Promise.all([resolve_cookie_detailed(currentNode.parentNode, policy, badButtons)])
+    }
+    else {
+        // DETAIL_PROCESSED_POP = true
+        console.log('has save button')
+    }
+
+    if((button_check_result.is_reject!=undefined)&&(DETAIL_PROCESSED_POP===false)){
+        if (button_check_result.is_reject===true){
+            DETAIL_PROCESSED_POP = true
+            console.log('rejecting all')
+            text_buttons[button_check_result.best_index].click()
+            return new Promise((resolve) =>{
+                resolve(button_check_result)
+                })
+        }
+    }
+
+    if((button_check_result.solved===true)&&(DETAIL_PROCESSED_POP===false)){
+        // do all the checkbox actions or press all the buttons
+        if (button_check_result.checkbox===true){
+            var processing = cleaned_inputs
+        } else {
+            var processing = labelled_buttons
+        }
+        
+        for (idx of button_check_result.pos_labels){
+            if ((button_check_result.checkbox)){
+                if ((processing[idx].checked!=undefined)&&(processing[idx]!=null)){
+                    processing[idx].checked=true;
+                }
+            } else {
+                processing[idx].click()
+            }
+        }
+
+        // press save
+        console.log('saving preferences')
+        text_buttons[button_check_result.best_index].click()
+    }
+    return new Promise((resolve) =>{
+        resolve(button_check_result)
+        })
+    
 }
 
 async function get_cookie_child(currentNode, source, observer=null) {
@@ -174,24 +402,24 @@ async function get_cookie_child(currentNode, source, observer=null) {
 
             console.log(policy)
 
-            if ((result.check === true) && (PROCESSED_POP===false)){
+            if ((result.check === true) && (PROCESSED_POP_INIT===false)){
                 var loopFlag = true
                 while ((loopFlag===true)) {
 
-                    if(PROCESSED_POP===true){
+                    if(PROCESSED_POP_INIT===true){
                         return null
                     }
                     console.log('in the loop')
-                    buttons = currentNode.getElementsByTagName('button');
+                    var buttons = currentNode.getElementsByTagName('button');
                     console.log(buttons)
                     
-                    if(PROCESSED_POP===true){
+                    if(PROCESSED_POP_INIT===true){
                         return null
                     }
 
                     if (buttons.length>0){
                         
-                        if(PROCESSED_POP===true){
+                        if(PROCESSED_POP_INIT===true){
                             return null
                         }
 
@@ -200,8 +428,21 @@ async function get_cookie_child(currentNode, source, observer=null) {
                         button_text = []
                         button_labels = []
                         input_labels = []
+                        labelled_buttons = []
+                        text_buttons  = []
+                        cleaned_inputs = []
+
                         inputs = currentNode.getElementsByTagName('input');
-                        for (const inp of inputs){
+                        for (inp of inputs){
+                            style=window.getComputedStyle(inp)
+                            if (!((style.visibility === 'hidden')
+                                ||(style.visibility === 'none') || (style.display === 'hidden')
+                                ||(style.display === 'none')))
+                                {
+                                    cleaned_inputs.push(inp)
+                                }
+                        }
+                        for (const inp of cleaned_inputs){
                             var input_string = "";
                             if (inp.labels.length>0){
                                 for (const label of inp.labels){
@@ -210,7 +451,7 @@ async function get_cookie_child(currentNode, source, observer=null) {
                                 input_labels.push(input_string)
                             }
                         }
-
+                        
                         for (const button of buttons){
                             var label_string = ""
                             if (button.labels.length>0){
@@ -218,21 +459,23 @@ async function get_cookie_child(currentNode, source, observer=null) {
                                 for (const label of button.labels){
                                     label_string += label + ' ';
                                 }
-                                button_labels = []
+                                button_labels.push(label_string)
+                                labelled_buttons.push(button)
                             }
                             else {
                                 // console.log('no labels')
                                 label_string = button.innerText
                                 button_text.push(label_string)
+                                text_buttons.push(button)
                             }
                             
-                            if(PROCESSED_POP===true){
+                            if(PROCESSED_POP_INIT===true){
                                 return null
                             }
 
                             // console.log("button label is ", label_string)
                         }
-                        if(PROCESSED_POP===true){
+                        if(PROCESSED_POP_INIT===true){
                             return null
                         }
                         console.log('sending buttons')
@@ -244,7 +487,7 @@ async function get_cookie_child(currentNode, source, observer=null) {
                                 JSON.stringify(policy.policy).toLowerCase(), 
                                 JSON.stringify(badButtons).toLowerCase()
                             )
-                            if(PROCESSED_POP===true){
+                            if(PROCESSED_POP_INIT===true){
                                 return null
                             }
                             console.log('receiving response for buttons')
@@ -255,39 +498,99 @@ async function get_cookie_child(currentNode, source, observer=null) {
                             }
                             console.log(button_check_result)
                             
-                            if(PROCESSED_POP===true){
+                            if(PROCESSED_POP_INIT===true){
                                 return null
                             }
 
-                            if ((button_check_result.check) && (!PROCESSED_POP)){
+                            if ((button_check_result.check) && (!PROCESSED_POP_INIT)){
                                 // do some processing
                                 // click some button - Accept first, reject second, nuance third
                                 buttons[button_check_result.best_index].click()
+                                
                                 if (button_check_result.solved){
                                     console.log('resolved the pop up')
-                                    PROCESSED_POP = true
+                                    PROCESSED_POP_INIT = true
                                     loopFlag = false
                                     return null
                                 }
                                 else {
                                     // go into detailed options
-                                    loopFlag=false
+                                    loopFlag=true
+                                    // console.log('before time out')
+                                    // currentNode = document.activeElement
+                                    // console.log(currentNode, Date.now())
+                                    
+                                    await Promise.all([timeout(2000)])
+
+                                    // console.log('after time out', Date.now())
+                                    currentNode = document.activeElement
+                                    console.log(currentNode)
+                                    // console.log('done check')
+                                    PROCESSED_POP_INIT=true
+                                    var effectiveNode = null
+                                    if (currentNode.nodeName==='BODY'){
+                                        for (const child of currentNode.querySelectorAll('*')){
+                                            if ((child.nodeName!=='SCRIPT')&&(child.nodeValue==null)){
+                                                style=window.getComputedStyle(child)
+                                                
+                                                var old_z = -1000
+                                                var z = style.zIndex
+    
+                                                if (!((style.visibility === 'hidden')
+                                                ||(style.visibility === 'none') || (style.display === 'hidden')
+                                                ||(style.display === 'none'))&&(z>old_z)&&(z!=='auto'))
+                                                {
+                                                    console.log(z, old_z)
+                                                    console.log(child, effectiveNode)
+                                                    effectiveNode = child
+                                                    old_z = z
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        effectiveNode = currentNode
+                                        while((effectiveNode.getElementsByTagName('input').length<2)
+                                            ||(effectiveNode.getElementsByTagName('button').length<1)){
+                                            effectiveNode = effectiveNode.parentNode
+                                            console.log('no. labels', effectiveNode.getElementsByTagName('input').length)
+                                            console.log('no. buttons', effectiveNode.getElementsByTagName('button').length)
+                                        }
+                                    }
+                                    // setTimeout(()=>console.log(document.activeElement), 6000)
+                                    
+                                    // console.log('final z', z)
+                                    // console.log('no. labels', effectiveNode.getElementsByTagName('input').length)
+                                    // console.log('no. buttons', effectiveNode.getElementsByTagName('button').length)
+                                    
+                                    console.log(effectiveNode)
+                                    await Promise.all([resolve_cookie_detailed(effectiveNode, policy, badButtons)])
+                                    console.log('returned from cookie resolution function')
+                                    // // return null 
                                     return null
                                 }
                             }
                             else{
-                                if(PROCESSED_POP===true){
+                                if(PROCESSED_POP_INIT===true){
                                     return null
                                 }
                                 console.log('moving to parent - had buttons')
-                                badButtons.push(...buttons_labels)
+                                badButtons.push(...button_labels)
                                 currentNode = currentNode.parentNode;
                                 loopFlag = true;
                                 // counter = counter -1;
                             }
                         }
                         else if ((input_labels.length>0)||(button_labels.length>0)){
-                            continue
+                            PROCESSED_POP_INIT = true
+                            
+                            await Promise.all([resolve_cookie_detailed(currentNode, policy, badButtons)])
+                            if(PROCESSED_POP_INIT===true){
+                                return null
+                            }
+                                
+                            return null
+
                         }
                     }
                     else {
@@ -386,26 +689,54 @@ const tangible = document.body.getElementsByTagName("*");
 console.log(tangible)
 
 function tangible_cookie_check(){
-    for (const element of tangible) {
-        // Get the cookie tag
-        
-        // console.log('tangible func', element.firstChild)
-        
-        const cookieNode = get_cookie_child(element, 'tangible');
-        
-        // if (cookieNode != null){
-        //     console.log('cookie is in', cookieNode)
-        // }
-        // else {
-        //     console.log(element, "has no cookies")
-        // }
-    }
+    // const focus = document.activeElement
+    // if (focus.shadowRoot.childNodes){
+    //     for (const element of focus.shadowRoot.childNodes){
+    //         const cookieNode = get_cookie_child(element, 'tangible');
+    //     }
+    // }
+    // else{
+        for (const element of tangible) {
+            // Get the cookie tag
+            // console.log(element)
+            // console.log('tangible func', element.firstChild)
+            
+            const cookieNode = get_cookie_child(element, 'tangible');
+            
+            // if (cookieNode != null){
+            //     console.log('cookie is in', cookieNode)
+            // }
+            // else {
+            //     console.log(element, "has no cookies")
+            // }
+        }
+    // }
 }
+
+// function shadowroot_cookie_check(){
+//     if (PROCESSED_POP_INIT === false){
+//     const focus = document.activeElement
+//     // console.log(focus)
+//     // console.log(focus.shadowRoot)
+//     // console.log(focus.shadowRoot.childNodes)
+//     const shadowChildren = focus.shadowRoot.childNodes
+//     console.log(shadowChildren)
+//     for (const element of focus.getElementsByTagName("*")) {   
+//         const cookieNode = get_cookie_child(element, 'tangible');
+//         }
+//     for (const element of shadowChildren) {
+//         console.log(element)
+//         const cookieNode = get_cookie_child(element, 'tangible');
+        
+//         }
+//     }
+// }
+
 
 setTimeout(tangible_cookie_check, 2000);
 
 
-// setTimeout(tangible_cookie_check, 5000);
+// setTimeout(shadowroot_cookie_check, 7000);
 
 // setTimeout(()=>console.log("\n\n\n\n\n\n\nCOUNT IS:", count_global, "\n\n\n\n\n\n\n"), 10000);
 
@@ -453,3 +784,10 @@ const launch_observer = () => {
 
 // endpt();
 
+// window.addEventListener('focus', (element)=>{
+//     if (PROCESSED_POP_INIT===true)
+//     {
+//         element = element.target
+//         console.log(element)
+//     }
+// }, true);
