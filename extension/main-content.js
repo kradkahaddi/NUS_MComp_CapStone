@@ -260,6 +260,8 @@ async function resolve_cookie_detailed(currentNode, policy, badButtons){
     // DO CHECK FOR SAVE BUTTON
     if (!button_check_result.has_save_button){
         console.log('no save button')
+        console.log("current", currentNode, currentNode.nodeName)
+        console.log("parent", currentNode.parentNode)
         await Promise.all([resolve_cookie_detailed(currentNode.parentNode, policy, badButtons)])
     }
     else {
@@ -515,20 +517,19 @@ async function get_cookie_child(currentNode, source, observer=null) {
                                 }
                                 else {
                                     // go into detailed options
+                                    console.log('going into detailed options')
                                     loopFlag=true
-                                    // console.log('before time out')
-                                    // currentNode = document.activeElement
-                                    // console.log(currentNode, Date.now())
                                     
                                     await Promise.all([timeout(2000)])
 
                                     // console.log('after time out', Date.now())
                                     currentNode = document.activeElement
                                     console.log(currentNode)
+                                    console.log(currentNode.nodeName)
                                     // console.log('done check')
                                     PROCESSED_POP_INIT=true
                                     var effectiveNode = null
-                                    if (currentNode.nodeName==='BODY'){
+                                    if ((currentNode.nodeName==='BODY')){
                                         for (const child of currentNode.querySelectorAll('*')){
                                             if ((child.nodeName!=='SCRIPT')&&(child.nodeValue==null)){
                                                 style=window.getComputedStyle(child)
@@ -557,11 +558,6 @@ async function get_cookie_child(currentNode, source, observer=null) {
                                             console.log('no. buttons', effectiveNode.getElementsByTagName('button').length)
                                         }
                                     }
-                                    // setTimeout(()=>console.log(document.activeElement), 6000)
-                                    
-                                    // console.log('final z', z)
-                                    // console.log('no. labels', effectiveNode.getElementsByTagName('input').length)
-                                    // console.log('no. buttons', effectiveNode.getElementsByTagName('button').length)
                                     
                                     console.log(effectiveNode)
                                     await Promise.all([resolve_cookie_detailed(effectiveNode, policy, badButtons)])
@@ -600,27 +596,6 @@ async function get_cookie_child(currentNode, source, observer=null) {
                     }
                 }
             }
-
-            // if (result.check===true) {
-            //     // return currentNode;
-            //     // console.log(currentNode)
-
-            //     buttons = currentNode.getElementsByTagName('button');
-            //     // console.log(buttons)
-            //     if (buttons.length>0){
-            //         console.log('found cookie candidate', currentNode)
-            //         console.log(buttons)
-            //         if (observer != null) {
-            //             // actually only do something when the banner is processed
-            //             console.log('disconnecting the observer')
-            //             observer.disconnect();
-            //         }
-            //     }
-
-            // }
-            // else{
-            //     return null;
-            // }
         }
     }
     else {
@@ -636,38 +611,18 @@ async function get_cookie_child(currentNode, source, observer=null) {
         return null
     }
 
-    // console.log('finally', checkFlag, currentNode)
-    // count_global = count_global +1
-    // return null
+    
 }
 
 const mutationCallback = (mutationList, observer) => {
 
     for (const mutation of mutationList) {
         if (mutation.type === 'childList') {
-            // if (mutation.hasAttribute('addedNode'))
-            // console.log(mutation.addedNodes);
-            // if (mutation.addedNodes.length>4){
-            //     var addedNodes = mutation.addedNodes.slice(0,3)
-            // }
-            // else {
-            //     var addedNodes = mutation.addedNodes
-            // }
             var addedNodes = mutation.addedNodes
-            // const node = mutation.addedNodes[0];
             for (const node of addedNodes){
                 // console.log(node)
                 if ((node.innerText != null) && (node.innerText != undefined)){
-                    // console.log(node)
-                    // console.log(node.innerText)
                     const cookie_node = get_cookie_child(node, 'mutation', observer);
-
-                    // if (cookie_node != null){
-                    //     console.log('found it')
-                    //     console.log('disconnecting observer')
-                    //     observer.disconnect()
-                    //     break
-                    // }
                 }
             }
         }
@@ -689,105 +644,14 @@ const tangible = document.body.getElementsByTagName("*");
 console.log(tangible)
 
 function tangible_cookie_check(){
-    // const focus = document.activeElement
-    // if (focus.shadowRoot.childNodes){
-    //     for (const element of focus.shadowRoot.childNodes){
-    //         const cookieNode = get_cookie_child(element, 'tangible');
-    //     }
-    // }
-    // else{
-        for (const element of tangible) {
-            // Get the cookie tag
-            // console.log(element)
-            // console.log('tangible func', element.firstChild)
-            
-            const cookieNode = get_cookie_child(element, 'tangible');
-            
-            // if (cookieNode != null){
-            //     console.log('cookie is in', cookieNode)
-            // }
-            // else {
-            //     console.log(element, "has no cookies")
-            // }
-        }
-    // }
+    for (const element of tangible) {
+        const cookieNode = get_cookie_child(element, 'tangible');
+    }
 }
-
-// function shadowroot_cookie_check(){
-//     if (PROCESSED_POP_INIT === false){
-//     const focus = document.activeElement
-//     // console.log(focus)
-//     // console.log(focus.shadowRoot)
-//     // console.log(focus.shadowRoot.childNodes)
-//     const shadowChildren = focus.shadowRoot.childNodes
-//     console.log(shadowChildren)
-//     for (const element of focus.getElementsByTagName("*")) {   
-//         const cookieNode = get_cookie_child(element, 'tangible');
-//         }
-//     for (const element of shadowChildren) {
-//         console.log(element)
-//         const cookieNode = get_cookie_child(element, 'tangible');
-        
-//         }
-//     }
-// }
 
 
 setTimeout(tangible_cookie_check, 2000);
 
-
-// setTimeout(shadowroot_cookie_check, 7000);
-
-// setTimeout(()=>console.log("\n\n\n\n\n\n\nCOUNT IS:", count_global, "\n\n\n\n\n\n\n"), 10000);
-
 const launch_observer = () => {
     console.log("\n\n\nobserver launched\n\n\n")
     observer.observe(body, config)};
-
-// setTimeout(launch_observer, 1500)
-
-
-
-// function sendMessage(query, url) {
-//     return new Promise((resolve, reject)=>{
-//         chrome.runtime.sendMessage(
-//             {
-//                 contentScriptQuery: query,
-//                 url: url
-//             }, (response) => {
-//                 console.log("TESTING API")
-//                 if (response!=undefined && response !=""){
-//                     console.log('returning response')
-//                     resolve(response)
-//                 }
-//                 else {
-//                     console.log("API was non responsive")
-//                     reject(response)
-//                 }
-//             }
-//         )
-//     })
-// }
-
-// const checker = async (query, url) => {
-//     console.log('querying');
-//     console.log('outside', await sendMessage(query, url));
-//     console.log('done querying');
-//     // console.log(await result);
-// }
-
-// checker("TestAPI", APIURL+"testingapi");
-
-// console.log(await checker("TestAPI", APIURL+"testingapi"));
-
-
-
-// endpt();
-
-// window.addEventListener('focus', (element)=>{
-//     if (PROCESSED_POP_INIT===true)
-//     {
-//         element = element.target
-//         console.log(element)
-//     }
-// }, true);
