@@ -117,5 +117,6 @@ saveButton.onclick = () => {
         })
         
         testFunc()
+        document.getElementById('saved').style.display='block';
     }
 }
