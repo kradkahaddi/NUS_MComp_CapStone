@@ -132,6 +132,6 @@ saveButton.onclick = () => {
 }
 
 logsButton = document.getElementById('logs')
-
+resetButton = document.getElementById('reset')
 logsButton.onclick = () => getLogs()
-logsButton.onclick = () => chrome.storage.sync.set({'cookie-extension-batch-logs': {}})
+resetButton.onclick = () => chrome.storage.sync.set({'cookie-extension-batch-logs': {}})
