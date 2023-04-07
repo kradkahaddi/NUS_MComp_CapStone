@@ -274,6 +274,16 @@ async function resolve_cookie_detailed(currentNode, policy, badButtons){
             DETAIL_PROCESSED_POP = true
             console.log('rejecting all')
             text_buttons[button_check_result.best_index].click()
+            
+            button_check_result['url'] = document.URL
+            button_check_result['policy'] = policy
+            logs = await getStorageData('cookie-extension-batch-logs');
+            
+            logs[document.title] = button_check_result
+            chrome.storage.sync.set({
+                'cookie-extension-batch-logs': logs
+            })
+
             return new Promise((resolve) =>{
                 resolve(button_check_result)
                 })
@@ -301,6 +311,15 @@ async function resolve_cookie_detailed(currentNode, policy, badButtons){
         // press save
         console.log('saving preferences')
         text_buttons[button_check_result.best_index].click()
+        
+        button_check_result['url'] = document.URL
+        button_check_result['policy'] = policy
+        logs = await getStorageData('cookie-extension-batch-logs');
+        
+        logs[document.title] = button_check_result
+        chrome.storage.sync.set({
+            'cookie-extension-batch-logs': logs
+        })
     }
     return new Promise((resolve) =>{
         resolve(button_check_result)
@@ -511,6 +530,15 @@ async function get_cookie_child(currentNode, source, observer=null) {
                                 
                                 if (button_check_result.solved){
                                     console.log('resolved the pop up')
+                                    button_check_result['url'] = document.URL
+                                    button_check_result['policy'] = policy
+                                    logs = await getStorageData('cookie-extension-batch-logs');
+                                    
+                                    logs[document.title] = button_check_result
+                                    chrome.storage.sync.set({
+                                        'cookie-extension-batch-logs': logs
+                                    })
+                                    
                                     PROCESSED_POP_INIT = true
                                     loopFlag = false
                                     return null

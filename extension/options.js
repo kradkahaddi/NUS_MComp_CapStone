@@ -71,6 +71,16 @@ async function testFunc(){
     console.log('after await')
 }
 
+async function getLogs(){
+    console.log('getting logs')
+    logs = await getStorageData('cookie-extension-batch-logs')
+    console.log('retrieved')
+    var blob = new Blob([JSON.stringify(logs)], {
+        type: "text/plain;charset=utf-8"
+    });
+    saveAs(blob, 'download.json')
+}
+
 const saveButton = document.getElementById('saveButton')
 
 const checkAll = ()=>{
@@ -120,3 +130,8 @@ saveButton.onclick = () => {
         document.getElementById('saved').style.display='block';
     }
 }
+
+logsButton = document.getElementById('logs')
+
+logsButton.onclick = () => getLogs()
+logsButton.onclick = () => chrome.storage.sync.set({'cookie-extension-batch-logs': {}})
