@@ -87,10 +87,10 @@ class InboundHTML(BaseModel):
    string:str
    lang:str
 
-@app.post("/wholetest")
-def test_whole_body(body:InboundHTML):
-   print(body.string[:200])
-   return dict(check=False)
+# @app.post("/wholetest")
+# def test_whole_body(body:InboundHTML):
+#    print(body.string[:200])
+#    return dict(check=False)
 
 @app.post("/fragtest")
 def test_whole_body(body:InboundHTML):
@@ -323,11 +323,16 @@ def test_detailed_buttons(request:InboundButtonDetails):
       checkbox=False
       option_labels = labelled_buttons
    
+   if policy=='accept':
+      options['perf']=True
+      options['func']=True
+      options['tar'] = True
+
    if (policy=='reject') or (policy=='necessary'):
       check_array= []
       # option_labels = []
    
-   elif policy=='custom':
+   elif (policy=='custom') or (policy=='accept'):
       check_array=[]
       # option_labels = []
 
@@ -343,11 +348,14 @@ def test_detailed_buttons(request:InboundButtonDetails):
                         (target_set, options['tar'])):
          # choice_index=0
          if option:
-            key = list(choice_set.intersection(checking_set))[0]
-            for i,button_label in enumerate(checking_list):
-               if (key in button_label) and (i not in check_array):
-                  check_array.append(i)
-                  # option_labels.append(button_label) 
+            key = list(choice_set.intersection(checking_set))
+            if key:
+               key = key[0]
+               for i,button_label in enumerate(checking_list):
+                  if (key in button_label) and (i not in check_array):
+                     check_array.append(i)
+                     # option_labels.append(button_label) 
+               
 
             # option_labels = list()         
          

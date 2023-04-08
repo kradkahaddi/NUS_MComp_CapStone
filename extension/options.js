@@ -75,7 +75,7 @@ async function getLogs(){
     console.log('getting logs')
     logs = await getStorageData('cookie-extension-batch-logs')
     console.log('retrieved')
-    var blob = new Blob([JSON.stringify(logs)], {
+    var blob = new Blob([JSON.stringify(logs['cookie-extension-batch-logs'])], {
         type: "text/plain;charset=utf-8"
     });
     saveAs(blob, 'download.json')

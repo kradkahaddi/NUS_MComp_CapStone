@@ -15,25 +15,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
-    else if (request.contentScriptQuery=="TestingWhole") {
-        var url = request.url;
-        console.log("whole testing url is: ", url);
-        // var body = JSON.stringify(request.body);
-        fetch(url, {
-                method: "POST",
-                // mode: "cors",
-                // cache: "no-cache",
-                // credentials: "same-origin",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({string: request.body, lang: request.lang}),
-            })
-            .then(response => response.text())
-            .then(response => sendResponse(response))
-            .catch();
-        return true;
-    }
+    // else if (request.contentScriptQuery=="TestingWhole") {
+    //     var url = request.url;
+    //     console.log("whole testing url is: ", url);
+    //     // var body = JSON.stringify(request.body);
+    //     fetch(url, {
+    //             method: "POST",
+    //             // mode: "cors",
+    //             // cache: "no-cache",
+    //             // credentials: "same-origin",
+    //             headers: {
+    //                 "Content-Type": "application/json",
+    //             },
+    //             body: JSON.stringify({string: request.body, lang: request.lang}),
+    //         })
+    //         .then(response => response.text())
+    //         .then(response => sendResponse(response))
+    //         .catch();
+    //     return true;
+    // }
 
     else if (request.contentScriptQuery=="TestingFrag") {
         var url = request.url;

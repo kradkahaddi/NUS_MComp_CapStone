@@ -278,7 +278,7 @@ async function resolve_cookie_detailed(currentNode, policy, badButtons){
             button_check_result['url'] = document.URL
             button_check_result['policy'] = policy
             logs = await getStorageData('cookie-extension-batch-logs');
-            
+            logs = logs['cookie-extension-batch-logs']
             logs[document.title] = button_check_result
             chrome.storage.sync.set({
                 'cookie-extension-batch-logs': logs
@@ -315,7 +315,7 @@ async function resolve_cookie_detailed(currentNode, policy, badButtons){
         button_check_result['url'] = document.URL
         button_check_result['policy'] = policy
         logs = await getStorageData('cookie-extension-batch-logs');
-        
+        logs = logs['cookie-extension-batch-logs']
         logs[document.title] = button_check_result
         chrome.storage.sync.set({
             'cookie-extension-batch-logs': logs
@@ -533,7 +533,7 @@ async function get_cookie_child(currentNode, source, observer=null) {
                                     button_check_result['url'] = document.URL
                                     button_check_result['policy'] = policy
                                     logs = await getStorageData('cookie-extension-batch-logs');
-                                    
+                                    logs = logs['cookie-extension-batch-logs']
                                     logs[document.title] = button_check_result
                                     chrome.storage.sync.set({
                                         'cookie-extension-batch-logs': logs

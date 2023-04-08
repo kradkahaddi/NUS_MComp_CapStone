@@ -4,3 +4,5 @@ choices
 save
 preference
 preferences
+ok
+okay
