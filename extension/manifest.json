@@ -20,7 +20,8 @@
     },
     "permissions": [
         "scripting",
-        "storage"
+        "storage",
+        "unlimitedStorage"
     ],
     "options_page": "options.html"
 

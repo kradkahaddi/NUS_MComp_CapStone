@@ -64,6 +64,15 @@ const getStorageData = key =>
     )
   )
 
+  const getLocalData = key =>
+  new Promise((resolve, reject) =>
+    chrome.storage.local.get(key, result =>
+      chrome.runtime.lastError
+        ? reject(Error(chrome.runtime.lastError.message))
+        : resolve(result)
+    )
+  )
+
 async function testFunc(){
     console.log('await sync')
     policyGlobal = await getStorageData('policy')
@@ -73,7 +82,7 @@ async function testFunc(){
 
 async function getLogs(){
     console.log('getting logs')
-    logs = await getStorageData('cookie-extension-batch-logs')
+    logs = await getLocalData('cookie-extension-batch-logs')
     console.log('retrieved')
     var blob = new Blob([JSON.stringify(logs['cookie-extension-batch-logs'])], {
         type: "text/plain;charset=utf-8"
@@ -134,4 +143,4 @@ saveButton.onclick = () => {
 logsButton = document.getElementById('logs')
 resetButton = document.getElementById('reset')
 logsButton.onclick = () => getLogs()
-resetButton.onclick = () => chrome.storage.sync.set({'cookie-extension-batch-logs': {}})
+resetButton.onclick = () => chrome.storage.local.set({'cookie-extension-batch-logs': {}})

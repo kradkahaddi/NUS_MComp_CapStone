@@ -15,6 +15,14 @@ const getStorageData = key =>
         : resolve(result)
     )
   )
+const getLocalData = key =>
+  new Promise((resolve, reject) =>
+    chrome.storage.local.get(key, result =>
+      chrome.runtime.lastError
+        ? reject(Error(chrome.runtime.lastError.message))
+        : resolve(result)
+    )
+  )
 
 function sleep_func(milliseconds){
     new Promise((resolve, reject)=>setTimeout(()=>{return False}, milliseconds)
@@ -277,10 +285,10 @@ async function resolve_cookie_detailed(currentNode, policy, badButtons){
             
             button_check_result['url'] = document.URL
             button_check_result['policy'] = policy
-            logs = await getStorageData('cookie-extension-batch-logs');
+            logs = await getLocalData('cookie-extension-batch-logs');
             logs = logs['cookie-extension-batch-logs']
             logs[document.title] = button_check_result
-            chrome.storage.sync.set({
+            chrome.storage.local.set({
                 'cookie-extension-batch-logs': logs
             })
 
@@ -314,12 +322,13 @@ async function resolve_cookie_detailed(currentNode, policy, badButtons){
         
         button_check_result['url'] = document.URL
         button_check_result['policy'] = policy
-        logs = await getStorageData('cookie-extension-batch-logs');
+        logs = await getLocalData('cookie-extension-batch-logs');
         logs = logs['cookie-extension-batch-logs']
         logs[document.title] = button_check_result
-        chrome.storage.sync.set({
+        chrome.storage.local.set({
             'cookie-extension-batch-logs': logs
         })
+        DETAIL_PROCESSED_POP = true 
     }
     return new Promise((resolve) =>{
         resolve(button_check_result)
@@ -532,13 +541,12 @@ async function get_cookie_child(currentNode, source, observer=null) {
                                     console.log('resolved the pop up')
                                     button_check_result['url'] = document.URL
                                     button_check_result['policy'] = policy
-                                    logs = await getStorageData('cookie-extension-batch-logs');
+                                    logs = await getLocalData('cookie-extension-batch-logs');
                                     logs = logs['cookie-extension-batch-logs']
                                     logs[document.title] = button_check_result
-                                    chrome.storage.sync.set({
+                                    chrome.storage.local.set({
                                         'cookie-extension-batch-logs': logs
-                                    })
-                                    
+                                        })
                                     PROCESSED_POP_INIT = true
                                     loopFlag = false
                                     return null
