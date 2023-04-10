@@ -39,6 +39,8 @@ orient
 orientate
 over
 pattern
+personalize
+personalise
 phase
 prepare
 prime
