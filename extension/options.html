@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Monster Options</title>
+</head>
+<body style="width: 30%;">
+    <div>
+        <h1>CHOOSE YOUR COOKIE POLICY</h1>
+        <hr>
+    </div>
+    
+    <div class="note">
+        <p>Please keep in mind that the policy choice is not strict.</p>
+        <p>If your choice is unavailable, then the cookie monster will pick the next best choice</p>
+        <p>In the following order:</p>
+        <ol style="font-size: 1em;">
+            <li>reject all, then</li>
+            <li>necessary only, then</li>
+            <li>accept all</li>
+        </ol>
+        <p>The same applies for custom policies.</p>
+        <p>The cookie monster will "accept all" only as a last resort.</p>
+    </div>
+    <div>
+        <label>
+            <input type="checkbox" id="accept">
+            Accept all
+        </label>
+        <br>
+        <label>
+            <input type="checkbox" id="necessary">
+            Accept only necessary
+        </label>
+        <br>
+        <label>
+            <input type="checkbox" id="reject">
+            Reject all
+        </label>
+        <br>
+        <label>
+            <input type="checkbox" id="custom">
+            Choose a custom policy
+        </label>
+    </div>
+    <div id="customDiv" style="display: none">
+        <h2>CHOOSE POLICY DETAILS</h2>
+        <hr>
+        <p>Note: necessary cookies will be accepted.</p>
+        <label>
+            <input type="checkbox" id="performance">
+            Performance cookies
+        </label>
+        <br>
+        <label>
+            <input type="checkbox" id="functional">
+            Functional cookies
+        </label>
+        <br>
+        <label>
+            <input type="checkbox" id="targeting">
+            Marketing (targeting) cookies
+        </label>
+        <br>
+    </div>
+    <br>
+    <div style="display: inline;">
+        <button style="margin:10px;" id="saveButton">Save</button>
+        <button style="margin:10px;" id="logs">Get Logs</button>
+        <button style="margin:10px;" id="reset">Reset Logs</button>
+    </div>
+    
+    <p id="warn" style="display: none;">choose an option to save</p>
+    <p id="saved" style="display: none;">successfully saved options</p>
+    <script src="options.js"></script>
+    <script src="FileSaver.js"></script>
+</body>
+</html>
